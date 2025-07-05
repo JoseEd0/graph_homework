@@ -1,10 +1,13 @@
 # Tarea de Grafos
 
 ## Integrantes: 
-- 1 ____   _____
-- 2 ____   _____
-- 3 ____   _____
+* José Huamani (202310632)
+* Gianfranco Cordero Aguirre (202310325)
+* David A. Salaverry Cuzcano (202310285)
+* Federico Iribar Casanova (202319321)
 
+## Nota:
+**En el README se solicita implementar BST, pero en el código no se incluye en el `enum` ni en el `gui.h`. De igual forma se ha implementado.**
 ## Objetivo: 
 El objetivo de esta tarea es implementar un **Path Finder** para la ciudad de Lima. 
 
