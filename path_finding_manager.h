@@ -19,9 +19,9 @@
 using namespace std;
 
 enum Algorithm {
-    None,
     Dijkstra,
-    AStar
+    AStar,
+    BestFirst
 };
 
 class PathFindingManager {
@@ -30,14 +30,13 @@ private:
     std::vector<sfLine> path;
     std::vector<sfLine> visited_edges;
 
-    // Optimización: Control de renderizado
     int render_counter = 0;
-    const int RENDER_FREQUENCY = 50; // Renderizar cada 50 iteraciones
+    const int RENDER_FREQUENCY = 50;
 
     struct Entry {
         Node* node;
         double dist;
-        double priority; // Para A*
+        double priority; // Para A* y Best First
 
         bool operator < (const Entry& other) const {
             return priority > other.priority;  // Min-heap
@@ -48,7 +47,7 @@ private:
     void dijkstra(Graph &graph) {
         std::unordered_map<Node *, Node *> parent;
         std::unordered_map<Node *, double> dist;
-        std::unordered_set<Node *> visited; // ¡CLAVE! Evita procesar nodos ya visitados
+        std::unordered_set<Node *> visited;
 
         // Inicializar distancias
         for (const auto& [id, node] : graph.nodes) {
@@ -65,23 +64,15 @@ private:
 
             Node* current = current_entry.node;
 
-            // OPTIMIZACIÓN: Saltar si ya fue visitado
             if (visited.find(current) != visited.end()) {
                 continue;
             }
-
             visited.insert(current);
-
-            // Terminar si llegamos al destino
             if (current == dest) {
                 break;
             }
-
-            // Explorar vecinos
             for (Edge* edge : current->edges) {
                 Node* vecino = nullptr;
-
-                // Determinar vecino según dirección
                 if (edge->src == current) {
                     vecino = edge->dest;
                 } else if (!edge->one_way && edge->dest == current) {
@@ -89,24 +80,18 @@ private:
                 } else {
                     continue;
                 }
-
-                // Saltar si ya fue visitado
                 if (visited.find(vecino) != visited.end()) {
                     continue;
                 }
-
                 double nueva_dist = dist[current] + edge->length;
-
                 if (nueva_dist < dist[vecino]) {
                     dist[vecino] = nueva_dist;
                     parent[vecino] = current;
                     pq.push({vecino, nueva_dist, nueva_dist});
 
-                    // Agregar para visualización
                     visited_edges.push_back(sfLine(current->coord, vecino->coord,
                                                   sf::Color::Yellow, 1.5f));
 
-                    // Renderizar con menos frecuencia
                     render_counter++;
                     if (render_counter % RENDER_FREQUENCY == 0) {
                         render();
@@ -121,7 +106,7 @@ private:
     // A* OPTIMIZADO
     void a_star(Graph &graph) {
         std::unordered_map<Node *, Node *> parent;
-        std::unordered_map<Node *, double> g_score; // Distancia real desde src
+        std::unordered_map<Node *, double> g_score;
         std::unordered_set<Node *> visited;
 
         // Inicializar
@@ -140,7 +125,6 @@ private:
 
             Node* current = current_entry.node;
 
-            // OPTIMIZACIÓN: Saltar si ya fue visitado
             if (visited.find(current) != visited.end()) {
                 continue;
             }
@@ -174,6 +158,66 @@ private:
                     double f_score = tentative_g + euclid(vecino, dest);
                     pq.push({vecino, tentative_g, f_score});
 
+                    visited_edges.push_back(sfLine(current->coord, vecino->coord,
+                                                  sf::Color::Yellow, 1.5f));
+
+                    render_counter++;
+                    if (render_counter % RENDER_FREQUENCY == 0) {
+                        render();
+                    }
+                }
+            }
+        }
+
+        set_final_path(parent);
+    }
+
+    void best_first_search(Graph &graph) {
+        std::unordered_map<Node *, Node *> parent;
+        std::unordered_set<Node *> visited;
+
+        priority_queue<Entry> pq;
+        double h_start = euclid(src, dest);
+        pq.push({src, 0, h_start});
+
+        while (!pq.empty()) {
+            Entry current_entry = pq.top();
+            pq.pop();
+
+            Node* current = current_entry.node;
+
+            if (visited.find(current) != visited.end()) {
+                continue;
+            }
+
+            visited.insert(current);
+
+            if (current == dest) {
+                break;
+            }
+
+            for (Edge* edge : current->edges) {
+                Node* vecino = nullptr;
+
+                if (edge->src == current) {
+                    vecino = edge->dest;
+                } else if (!edge->one_way && edge->dest == current) {
+                    vecino = edge->src;
+                } else {
+                    continue;
+                }
+
+                if (visited.find(vecino) != visited.end()) {
+                    continue;
+                }
+
+                double heuristic = euclid(vecino, dest);
+
+                if (parent.find(vecino) == parent.end()) {
+                    parent[vecino] = current;
+                    pq.push({vecino, 0, heuristic}); // dist = 0 porque no importa en Best First
+
+                    // Agregar para visualización
                     visited_edges.push_back(sfLine(current->coord, vecino->coord,
                                                   sf::Color::Yellow, 1.5f));
 
@@ -269,6 +313,9 @@ public:
                 break;
             case AStar:
                 a_star(graph);
+                break;
+            case BestFirst:
+                best_first_search(graph);
                 break;
             default:
                 break;
