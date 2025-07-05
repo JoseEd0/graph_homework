@@ -1,6 +1,5 @@
 //
 // Created by juan-diego on 3/29/24.
-// OPTIMIZED VERSION
 //
 
 #ifndef HOMEWORK_GRAPH_PATH_FINDING_MANAGER_H
@@ -215,13 +214,11 @@ private:
 
                 if (parent.find(vecino) == parent.end()) {
                     parent[vecino] = current;
-                    pq.push({vecino, 0, heuristic}); // dist = 0 porque no importa en Best First
+                    pq.push({vecino, 0, heuristic});
 
-                    // Agregar para visualización
                     visited_edges.push_back(sfLine(current->coord, vecino->coord,
                                                   sf::Color::Yellow, 1.5f));
 
-                    // Renderizar con menos frecuencia
                     render_counter++;
                     if (render_counter % RENDER_FREQUENCY == 0) {
                         render();
@@ -233,7 +230,6 @@ private:
         set_final_path(parent);
     }
 
-    // Heurística euclidiana optimizada
     double euclid(Node* a, Node* b) {
         double dx = a->coord.x - b->coord.x;
         double dy = a->coord.y - b->coord.y;
@@ -247,17 +243,14 @@ private:
 
         window_manager->clear();
 
-        // Dibujar grafo base (solo nodos, no todas las aristas)
         for (const auto& [id, node] : current_graph->nodes) {
             node->draw(window_manager->get_window());
         }
 
-        // Dibujar aristas visitadas
         for (const sfLine& line : visited_edges) {
             line.draw(window_manager->get_window(), sf::RenderStates::Default);
         }
 
-        // Dibujar nodos especiales
         if (src != nullptr) {
             src->draw(window_manager->get_window());
         }
@@ -267,7 +260,6 @@ private:
 
         window_manager->display();
 
-        // Pausa más corta para mayor velocidad
         sf::sleep(sf::milliseconds(1));
     }
 
@@ -298,13 +290,11 @@ public:
             return;
         }
 
-        // Limpiar y preparar
         path.clear();
         visited_edges.clear();
         render_counter = 0;
         current_graph = &graph;
 
-        // Medir tiempo de ejecución
         auto start = std::chrono::high_resolution_clock::now();
 
         switch (algorithm) {
